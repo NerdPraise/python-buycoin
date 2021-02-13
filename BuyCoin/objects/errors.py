@@ -1,25 +1,19 @@
 class Error(BaseException):
-    pass
+    @property
+    def response(self):
+        return {"message": self.message, "status_code": self.status}
 
 
 class QueryError(Error):
     def __init__(self, message=None, status=None):
-        self.message = message
+        self.message = message if message else "Invalid Query"
         self.status = status if status else 400
-
-    @property
-    def response(self):
-        return {"message": self.message, "status_code": self.status}
 
 
 class ClientError(Error):
     def __init__(self, message=None, status=None):
-        self.message = message
+        self.message = message if message else "Unauthorised User"
         self.status = status if status else 401
-
-    @property
-    def response(self):
-        return {"message": self.message, "status_code": self.status}
 
 
 class InvalidInstance(Error):
@@ -34,3 +28,9 @@ class InvalidInstance(Error):
 
     def __str__(self):
         return '%s %s' % (self.message, self.manager)
+
+
+class ParameterNotAllowed(Error):
+    def __init__(self, message=None, status=None):
+        self.message = message if message else "Invalid Parameter"
+        self.status = status if status else 404
