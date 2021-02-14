@@ -1,6 +1,10 @@
 # Python-buycoin
 
 A python SDK for BuyCoins
+#### Update
+New features to be added to SDK includes
+1. Type hinting
+2. NGNT manager and transactions
 
 ## Installations
 ```shell
@@ -27,8 +31,8 @@ Most of the library's functionality lies in the managers.py file which contains 
 The Manager classes handle every direct interaction with the BuyCoins API.
 
 ### Wallet Transactions
-This involves direct purchase, sale, transfer orders of cryptocurrencies.   
-A sample usecase
+This involves direct purchase, sale, transfer orders of cryptocurrencies and creation of cryptocurrencies addresses
+A sample use-case
 
 ```Python
 from BuyCoin.objects.wallet import Wallet
@@ -38,4 +42,10 @@ from BuyCoin.manager import CustomerWalletManager
 purchase_order = Wallet(operation="buy", cryptocurrency="bitcoin", coin_amount=0.01)
 wallet_manager = CustomerWalletManager()
 wallet_manager.initialize_transaction(purchase_order)
+
+# To get prices for all cryptocurrencies
+print(wallet_manager.get_prices())
+
+# To get prices for a specific cryptocurrency
+print(wallet_manager.get_prices(cryptocurrency="bitcoin"))
 ```
