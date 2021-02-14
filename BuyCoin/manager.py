@@ -35,7 +35,7 @@ class Manager:
         """
         Returns required headers
         """
-        auth = HTTPBasicAuth(self._username, self._password)
+        auth = HTTPBasicAuth(self.USERNAME, self.PASSWORD)
 
         return auth
 
@@ -76,10 +76,6 @@ class Manager:
             return e.response
         else:
             return request
-
-
-class P2PManager(Manager):
-    pass
 
 
 class CustomerWalletManager(Manager):
@@ -141,11 +137,37 @@ class CustomerWalletManager(Manager):
         }
     """
 
-    _CREATE_ADDRESS = """
+    _CREATE_ADDRESS_QUERY = """
         mutation CreateWalletAddress($cryptocurrency: Cryptocurrency) {
             createAddress(cryptocurrency: $cryptocurrency) {
                 cryptocurrency
                 address
+            }
+        }
+    """
+
+    _SEND_CRYPTO_QUERY = """
+        mutation SendCrypto($cryptocurrency: Cryptocurrency, $address: String!, $amount: BigDecimal!){
+            send(cryptocurrency: $cryptocurrency, amount: $amount, address: $address) {
+                id
+                address
+                amount
+                cryptocurrency
+                fee
+                status
+                transaction {
+                    txhash
+                    id
+                }
+            }
+        }
+    """
+    _BALANCE_QUERY = """
+        query {
+            getBalances {
+                id
+                cryptocurrency
+                confirmedBalance
             }
         }
     """
@@ -193,10 +215,60 @@ class CustomerWalletManager(Manager):
             price = self.get_prices(cryptocurrency=data["cryptocurrency"])
             variables = {**variables, "price": price[0]["id"]}
         elif operation == "create":
-            query = self._CREATE_ADDRESS
+            query = self._CREATE_ADDRESS_QUERY
         elif operation == "balance":
-            pass
+            query = self._BALANCE_QUERY
+        elif operation == "send":
+            query = self._SEND_CRYPTO_QUERY
 
+        try:
+            response = self._perform_request(query=query, variables=variables)
+        except Exception as e:
+            raise e
+        else:
+            return response["data"]
+
+
+class P2PManager(Manager):
+    """
+    Handles every peer to peer transactions
+
+    Place limit orders, get market cap history, get placed orders
+    """
+
+    _MARKET_ORDER_QUERY = """
+        query {
+          getMarketBook  {
+            dynamicPriceExpiry
+            orders {
+              edges {
+                node {
+                  id
+                  cryptocurrency
+                  coinAmount
+                  side
+                  status
+                  createdAt
+                  pricePerCoin
+                  priceType
+                  staticPrice
+                  dynamicExchangeRate
+                }
+              }
+            }
+          }
+        }
+    """
+
+    def place_limit_orders(self):
+        pass
+
+    def get_placed_orders(self):
+        pass
+
+    def get_market_order(self):
+        query = self._MARKET_ORDER_QUERY
+        variables = {}
         try:
             response = self._perform_request(query=query, variables=variables)
         except Exception as e:

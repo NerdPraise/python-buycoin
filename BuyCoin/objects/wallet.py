@@ -8,6 +8,7 @@ class Wallet:
     operation = None
     cryptocurrency = None
     coin_amount = None
+    address = None
 
     def __init__(self, operation, cryptocurrency, coin_amount=None, address=None):
         cryptocurrency = cryptocurrency.lower()

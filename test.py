@@ -16,7 +16,10 @@ class BuyCoinsTestCase(TestCase):
     def test_pnp_operation(self):
         pass
 
+    def tearDown(self):
+        pass
 
-d = Wallet(operation="buy", cryptocurrency="bitcoin", coin_amount=0.01)
+
+d = Wallet(operation="send", cryptocurrency="bitcoin", address="jsdjhshdhsh", coin_amount=0.01)
 manager = CustomerWalletManager()
 manager.initialize_transaction(d)
