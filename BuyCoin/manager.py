@@ -6,7 +6,7 @@ import jsonpickle
 
 
 from config import BuyCoinConfig
-from BuyCoin.objects.errors import QueryError
+from BuyCoin.objects.errors import QueryError, ParameterNotAllowed
 
 
 class Manager:
@@ -71,7 +71,7 @@ class Manager:
         try:
             request = self._client.execute(query=query, variables=variables)
         except (ConnectionError, HTTPError) as e:
-            return e
+            raise e
         except QueryError as e:
             return e.response
         else:
@@ -121,8 +121,8 @@ class CustomerWalletManager(Manager):
         }
         """
     _GET_CRYPTO_PRICE_QUERY = """
-        query GetBuyCoinsPrices($cryptocurrency: Cryptocurrency) {
-            getPrices(cryptocurrency: $cryptocurrency){
+        query GetBuyCoinsPrices($cryptocurrency: Cryptocurrency, $side:OrderSide) {
+            getPrices(cryptocurrency: $cryptocurrency, side:$side){
                 buyPricePerCoin
                 cryptocurrency
                 id
@@ -175,7 +175,7 @@ class CustomerWalletManager(Manager):
     def __init__(self):
         super().__init__()
 
-    def get_prices(self, cryptocurrency=None):
+    def get_prices(self, cryptocurrency=None, side=None):
         """
         Retrieve all cryptocurrencies current price
 
@@ -186,9 +186,13 @@ class CustomerWalletManager(Manager):
             response: a list of cryptocurrency and their prices
         """
         if cryptocurrency:
+            if not side:
+                raise ParameterNotAllowed("Please specify side, either a 'buy' or 'sell' side", status=400)
+
             query = self._GET_CRYPTO_PRICE_QUERY
             variables = {
-                "cryptocurrency": cryptocurrency
+                "cryptocurrency": cryptocurrency,
+                "side": side
             }
         else:
             query = self._GET_PRICE_QUERY
@@ -208,11 +212,11 @@ class CustomerWalletManager(Manager):
 
         if operation == "buy":
             query = self._BUY_QUERY
-            price = self.get_prices(cryptocurrency=data["cryptocurrency"])
+            price = self.get_prices(cryptocurrency=data["cryptocurrency"], side=operation)
             variables = {**variables, "price": price[0]["id"]}
         elif operation == "sell":
             query = self._SELL_QUERY
-            price = self.get_prices(cryptocurrency=data["cryptocurrency"])
+            price = self.get_prices(cryptocurrency=data["cryptocurrency"], side=operation)
             variables = {**variables, "price": price[0]["id"]}
         elif operation == "create":
             query = self._CREATE_ADDRESS_QUERY
@@ -260,15 +264,133 @@ class P2PManager(Manager):
         }
     """
 
-    def place_limit_orders(self):
-        pass
+    _DYNAMIC_PRICE_EXPIRY_QUERY = """
+        query {
+            getOrders(status: open) {
+                dynamicPriceExpiry
+            }
+        }
+    """
+
+    _PLACE_LIMIT_ORDER = """
+        mutation PostLimitOrder($orderSide: OrderSide!, $coinAmount: BigDecimal!, $cryptocurrency: Cryptocurrency,
+        $staticPrice: BigDecimal, $dynamicExchangeRate:BigDecimal, $priceType: PriceType!){
+            postLimitOrder(orderSide: $orderSide, coinAmount: $coinAmount, cryptocurrency: $cryptocurrency,
+            staticPrice: $staticPrice, priceType: $priceType){
+                id
+                cryptocurrency
+                coinAmount
+                side
+                status
+                createdAt
+                pricePerCoin
+                priceType
+                staticPrice
+                dynamicExchangeRate
+            }
+        }
+    """
+
+    _POST_MARKET_ORDER = """
+        mutation PostMarketOrder($orderSide: OrderSide!, $coinAmount: BigDecimal!, $cryptocurrency: Cryptocurrency!){
+            postMarketOrder(orderSide: $orderSide, coinAmount: $coinAmount, cryptocurrency: $cryptocurrency){
+                id
+                cryptocurrency
+                coinAmount
+                side
+                status
+                createdAt
+                pricePerCoin
+                priceType
+                staticPrice
+                dynamicExchangeRate
+            }
+        }
+            """
+
+    def initialize_transaction(self, p2p_transaction):
+        data = self.to_json(p2p_transaction)
+        operation = data.pop("operation")
+        variables = {**data}
+
+        if operation == "plo":
+            try:
+                if not variables["dynamicExchangeRate"]:
+                    variables.pop("dynamicExchangeRate")
+                elif not variables["staticPrice"]:
+                    variables.pop("staticPrice")
+            except:
+                pass
+            self.post_limit_order(variables)
+        elif operation == "pmo":
+            self.post_market_order(variables)
+
+    def post_limit_order(self, variables):
+        """
+        Places limit order for the supplied cryptocurrency.
+        Args:
+            order_side (str): The side of the order. This could be `buy` or `sell`.
+            coin_amount (str): The amount the limit order is based on.
+            currency (str): The cryptocurrency involved in the limit order.
+            static_price (str, optional): Static price for the cryptocurrency in Naira.
+            price_type (str): Static or dynamic price for the cryptocurrency.
+        Returns:
+            response: A JSON object containing the result from the request.
+        """
+        query = self._PLACE_LIMIT_ORDER
+
+        try:
+            response = self._perform_request(query=query, variables=variables)
+        except Exception as e:
+            raise e
+        else:
+            return response["data"]
+
+    def post_market_order(self, variables):
+        """
+        Places market order for the supplied cryptocurrency.
+        Args:
+            order_side (str): The side of the order. This could be `buy` or `sell`.
+            coin_amount (str): The amount the limit order is based on.
+            currency (str): The cryptocurrency involved in the limit order.
+        Returns:
+            response: A JSON object containing the result from the request.
+        """
+        query = self._POST_MARKET_ORDER
+        try:
+            response = self._perform_request(query=query, variables=variables)
+        except Exception as e:
+            raise e
+        else:
+            return response["data"]
 
     def get_placed_orders(self):
         pass
 
     def get_market_order(self):
+        """
+        Retrieves market order history.
+        Returns:
+            response: A JSON object containing response from the request.
+        """
         query = self._MARKET_ORDER_QUERY
         variables = {}
+        try:
+            response = self._perform_request(query=query, variables=variables)
+        except Exception as e:
+            raise e
+        else:
+            return response["data"]
+
+    def get_dynamic_price_expiry(self):
+        """
+        Retrieves when next dynamic prices will be updated
+        Returns:
+            response: A JSON object containing response from the request.
+        """
+        query = self._DYNAMIC_PRICE_EXPIRY_QUERY
+        variables = {}
+
         try:
             response = self._perform_request(query=query, variables=variables)
         except Exception as e:

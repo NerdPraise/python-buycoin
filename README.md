@@ -46,6 +46,6 @@ wallet_manager.initialize_transaction(purchase_order)
 # To get prices for all cryptocurrencies
 print(wallet_manager.get_prices())
 
-# To get prices for a specific cryptocurrency
-print(wallet_manager.get_prices(cryptocurrency="bitcoin"))
+# To get prices for a specific cryptocurrency for a side ('buy', 'sell')
+print(wallet_manager.get_prices(cryptocurrency="bitcoin", side="buy"))
 ```
