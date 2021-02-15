@@ -9,6 +9,11 @@ CustomerWalletManager = Mock()
 class WalletTestCase(TestCase):
     buy_response = {"id": "JWhhwqhW&whi32k2o832kmiqwdqb338rP8JIJ9H798fhiidkas=",
                     "cryptocurrency": "bitcoin", "status": "processing", "totalCoinAmount": 0.01, "side": "buy"}
+    price_response = {"getPrices": {"buyPricePerCoin": "17164294", "cryptocurrency": "bitcoin",
+                                    "id": "QnV5Y29pbnNQcmljZS05NjNmZTExOS02ZGVhLTRlMDItYTc3NC1lZjViYjk3YWZiNGE=",
+                                    "maxBuy": "24.90738193", "maxSell": "12.6217372", "minBuy": "0.001",
+                                    "minCoinAmount": "0.001", "minSell": "0.001", "sellPricePerCoin": "16824359.1781",
+                                    "status": "active"}}
 
     sell_response = {"id": "JWhhwqhW&738h&whi32k2o832kmiqwdqb338rP8JIJ9H798fhiidka=",
                      "cryptocurrency": "usd_tether", "status": "processing", "totalCoinAmount": 0.01, "side": "sell"}
@@ -19,13 +24,13 @@ class WalletTestCase(TestCase):
     }
 
     balance_response = {
-        'getBalances': [
-            {'id': 'wehjwehwa=', 'cryptocurrency': 'usd_tether', 'confirmedBalance': 0.0},
-            {'id': 'cac23&ahaha', 'cryptocurrency': 'naira_token', 'confirmedBalance': 0.0},
-            {'id': 'QwehjwehwaWNjb3VudC0=', 'cryptocurrency': 'bitcoin', 'confirmedBalance': 0.009},
-            {'id': 'wehjwehwasa323', 'cryptocurrency': 'ethereum', 'confirmedBalance': 1.0},
-            {'id': 'QWNjb3VudC0=', 'cryptocurrency': 'litecoin', 'confirmedBalance': 0.0},
-            {'id': 'QWNjb3VudC0=', 'cryptocurrency': 'usd_coin', 'confirmedBalance': 0.0}
+        "getBalances": [
+            {"id": "wehjwehwa=", "cryptocurrency": "usd_tether", "confirmedBalance": 0.0},
+            {"id": "cac23&ahaha", "cryptocurrency": "naira_token", "confirmedBalance": 0.0},
+            {"id": "QwehjwehwaWNjb3VudC0=", "cryptocurrency": "bitcoin", "confirmedBalance": 0.02},
+            {"id": "wehjwehwasa323", "cryptocurrency": "ethereum", "confirmedBalance": 1.0},
+            {"id": "QWNjb3VudC0=", "cryptocurrency": "litecoin", "confirmedBalance": 0.0},
+            {"id": "QWNjb3VudC0=", "cryptocurrency": "usd_coin", "confirmedBalance": 0.0}
         ]
     }
 
@@ -65,4 +70,14 @@ class WalletTestCase(TestCase):
         CustomerWalletManager.initialize_transaction.return_value = self.balance_response
         response = CustomerWalletManager.initialize_transaction(balance_order)
         self.assertEqual(response["getBalances"][2]["id"], "QwehjwehwaWNjb3VudC0=")
+        self.assertEqual(response["getBalances"][2]["confirmedBalance"], 0.02)
         self.assertEqual(response["getBalances"][2]["cryptocurrency"], "bitcoin")
+
+    def test_can_get_prices(self):
+        CustomerWalletManager.get_prices.return_value = self.price_response
+
+        response = CustomerWalletManager.get_prices(cryptocurrency="bitcoin")
+        self.assertEqual(response["getPrices"]["id"],
+                         "QnV5Y29pbnNQcmljZS05NjNmZTExOS02ZGVhLTRlMDItYTc3NC1lZjViYjk3YWZiNGE=")
+        self.assertEqual(response["getPrices"]["cryptocurrency"], "bitcoin")
+        self.assertEqual(response["getPrices"]["buyPricePerCoin"], "17164294")

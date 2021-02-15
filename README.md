@@ -5,6 +5,7 @@ A python SDK for BuyCoins
 New features to be added to SDK includes
 1. Type hinting
 2. NGNT manager and transactions
+3. Extensive tests
 
 ## Installations
 ```shell
@@ -48,4 +49,29 @@ print(wallet_manager.get_prices())
 
 # To get prices for a specific cryptocurrency for a side ('buy', 'sell')
 print(wallet_manager.get_prices(cryptocurrency="bitcoin", side="buy"))
+```
+
+### P2P Transactions
+P2P Trading lets you trade cryptocurrencies with other users. If you are not familiar with p2p trading on the Buycoins platform, read about it [here](https://developers.buycoins.africa/p2p/introduction)   
+A sample use-case
+
+```python
+from BuyCoin.objects.p2p import P2P
+from BuyCoin.manager import P2PManager
+
+# To place limit orders 
+limit_order = P2P(operation="plo", side="buy", coin_amount=0.01, cryptocurrency="bitcoin",
+         price_type="dynamic", dynamic_exchange_rate=3000)
+
+manager = P2PManager()
+manager.initialize_transaction(limit_order)
+
+# to post market orders
+market_order = P2P(operation="pmo", side="sell", coin_amount=0.01, cryptocurrency="bitcoin")
+manager.initialize_transaction(market_order)
+
+# Get market orders
+
+print(manager.get_market_order())
+
 ```
