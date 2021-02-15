@@ -5,7 +5,7 @@ import json
 import jsonpickle
 
 
-from config import BuyCoinConfig
+from .config import BuyCoinConfig
 from BuyCoin.objects.errors import QueryError, ParameterNotAllowed
 
 
