@@ -18,7 +18,8 @@ class Wallet:
         if operation not in buycoin_params["operation"]:
             raise ParameterNotAllowed("Invalid operation, options are 'buy', 'sell' ")
         if not coin_amount:
-            raise ParameterNotAllowed("Specify amount of coins to be bought")
+            if operation != "create" and operation != "balance":
+                raise ParameterNotAllowed("Specify amount of coins to be bought")
 
         if operation == "send":
             if not address:

@@ -222,6 +222,7 @@ class CustomerWalletManager(Manager):
             query = self._CREATE_ADDRESS_QUERY
         elif operation == "balance":
             query = self._BALANCE_QUERY
+            variables = {}
         elif operation == "send":
             query = self._SEND_CRYPTO_QUERY
 
