@@ -75,3 +75,17 @@ manager.initialize_transaction(market_order)
 print(manager.get_market_order())
 
 ```
+### Custom Queries
+If by chance, you need to perform queries outside the already provided ones, it can be done by creating an instance of the concerned transaction manager:
+```Python
+from BuyCoin.manager import CustomerWalletManager
+
+query = """
+    query {
+        <query>
+    }
+"""
+
+CustomerWalletManager._perform_request(query=query, variables={})
+# Variables are arguments to be passed into the query, if none, specify empty bracket
+```
