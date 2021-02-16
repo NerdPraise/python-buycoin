@@ -9,7 +9,7 @@ New features to be added to SDK includes
 
 ## Installations
 ```shell
-pip install python-buycoins
+pip install python-buycoins-sdk
 ```
 ## Requirements
 Python 3.0+

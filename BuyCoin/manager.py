@@ -39,16 +39,13 @@ class Manager:
 
         return auth
 
-    def to_json(self, data, pickled=False):
+    def to_json(self, data):
         '''
         Method to serialize class instance
         '''
-        if pickled:
-            return jsonpickle.encode(data)
-        else:
-            data = json.JSONDecoder().decode(jsonpickle.encode(data))
-            data.pop("py/object")
-            return data
+        data = json.JSONDecoder().decode(jsonpickle.encode(data))
+        data.pop("py/object")
+        return data
 
     def _initialize_client(self):
         """
